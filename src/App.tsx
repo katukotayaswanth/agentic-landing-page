@@ -1,17 +1,58 @@
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState, useCallback } from "react";
 import { motion, AnimatePresence, useScroll, useTransform } from "framer-motion";
 import { useInView } from "react-intersection-observer";
 import { FaXTwitter, FaLinkedinIn, FaFacebook } from "react-icons/fa6";
 import { HiOutlineMail } from "react-icons/hi";
 import "./index.css";
-const TOTAL_PAGES = 12;
+
+const TOTAL_PAGES = 10;
 const SPACER_PX = 24;
 
+// Error Boundary Component
+class ErrorBoundary extends React.Component<
+  { children: React.ReactNode; fallback?: React.ReactNode },
+  { hasError: boolean }
+> {
+  constructor(props: { children: React.ReactNode; fallback?: React.ReactNode }) {
+    super(props);
+    this.state = { hasError: false };
+  }
+
+  static getDerivedStateFromError() {
+    return { hasError: true };
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return this.props.fallback || (
+        <div className="text-white text-center p-4">
+          Something went wrong. Please refresh the page.
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
+
+// Font loader utility
+const loadFonts = () => {
+  const fontLink = document.createElement('link');
+  fontLink.href = 'https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&display=swap';
+  fontLink.rel = 'stylesheet';
+  document.head.appendChild(fontLink);
+};
+
 export default function App() {
+  useEffect(() => {
+    loadFonts();
+  }, []);
+
   return (
-    <div className="w-full h-full bg-black text-white">
-      <Landing />
-    </div>
+    <ErrorBoundary>
+      <div className="w-full h-full bg-black text-white">
+        <Landing />
+      </div>
+    </ErrorBoundary>
   );
 }
 
@@ -24,10 +65,17 @@ function useReducedMotion() {
     const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
     const onChange = () => setReduced(mq.matches);
     onChange();
-    mq.addEventListener ? mq.addEventListener("change", onChange) : mq.addListener(onChange);
-    return () => {
-      mq.removeEventListener ? mq.removeEventListener("change", onChange) : mq.removeListener(onChange);
-    };
+    
+    // Modern browsers
+    if (mq.addEventListener) {
+      mq.addEventListener('change', onChange);
+      return () => mq.removeEventListener('change', onChange);
+    } 
+    // Legacy browsers
+    else if (mq.addListener) {
+      mq.addListener(onChange);
+      return () => mq.removeListener(onChange);
+    }
   }, []);
   return reduced;
 }
@@ -36,19 +84,19 @@ function useReducedMotion() {
 function Landing() {
   const [currentPage, setCurrentPage] = useState(1);
   const reduced = useReducedMotion();
-  const onInView = (page: number, inView: boolean) => {
+  const onInView = useCallback((page: number, inView: boolean) => {
     if (inView) setCurrentPage(page);
-  };
+  }, []);
 
   return (
     <div
-      className="relative min-h-screen w-full overflow-x-hidden bg-black text-white no-scrollbar"
-      style={{ scrollBehavior: "smooth" }}
+      className="relative min-h-screen w-full overflow-x-hidden bg-black text-white"
+      style={{ scrollBehavior: "smooth", scrollbarWidth: "none", msOverflowStyle: "none" }}
     >
       <AgenticGrid reduced={reduced} />
       <LogoHUD page={currentPage} reduced={reduced} />
 
-      {/* Sections - Reordered for reduced-motion */}
+      {/*Pagewise Sections  */}
       <Section pageNum={1} onInView={onInView}><Page1 reduced={reduced} /></Section>
       <PageSpacer />
       <Section pageNum={2} onInView={onInView}><Page2 reduced={reduced} /></Section>
@@ -65,18 +113,17 @@ function Landing() {
       <PageSpacer />
       <Section pageNum={8} onInView={onInView}><Page8 reduced={reduced} /></Section>
       <PageSpacer />
-
-      <Section pageNum={10} onInView={onInView}><Page10 reduced={reduced} /></Section>
+      <Section pageNum={9} onInView={onInView}><Page9 reduced={reduced} /></Section>
       <PageSpacer />
-      <Section pageNum={12} onInView={onInView}><Page12 reduced={reduced} /></Section>
+      <Section pageNum={10} onInView={onInView}><Page10 reduced={reduced} /></Section>
 
-      {(import.meta as any)?.env?.DEV ? <DevTests /> : null}
+      {import.meta.env?.DEV && <DevTests />}
     </div>
   );
 }
 
 /* ------------------------------------ */
-function Section({
+const Section = React.memo(function Section({
   pageNum,
   onInView,
   children,
@@ -88,20 +135,20 @@ function Section({
   const { ref, inView } = useInView({ threshold: 0.6 });
   useEffect(() => onInView(pageNum, inView), [inView, onInView, pageNum]);
   return (
- <section ref={ref} className="relative w-full min-h-screen bg-black overflow-hidden snap-start">
-  {children}
-</section>
+    <section ref={ref} className="relative w-full min-h-screen bg-black overflow-hidden snap-start">
+      {children}
+    </section>
   );
-}
+});
 
 function PageSpacer() {
-  return <div style={{ height: SPACER_PX }} aria-hidden />;
+  return <div style={{ height: SPACER_PX }} aria-hidden="true" />;
 }
 
 /* ------------------------------------
  * Global chrome
  * ------------------------------------ */
-function AgenticGrid({ reduced }: { reduced: boolean }) {
+const AgenticGrid = React.memo(function AgenticGrid({ reduced }: { reduced: boolean }) {
   const { scrollYProgress } = useScroll();
   const x = useTransform(scrollYProgress, [0, 1], reduced ? [0, 0] : [0, -120]);
   const y = useTransform(scrollYProgress, [0, 1], reduced ? [0, 0] : [0, -80]);
@@ -121,12 +168,10 @@ function AgenticGrid({ reduced }: { reduced: boolean }) {
       }}
     />
   );
-}
+});
 
 /* ------------------------------------
  * HUD choreography
- * - Page 1 & 2: minimal, logo top-left
- * - Brand morphs into top-center via layoutId="brand"
  * ------------------------------------ */
 function LogoHUD({ page, reduced }: { page: number; reduced: boolean }) {
   const { scrollYProgress } = useScroll();
@@ -139,17 +184,30 @@ function LogoHUD({ page, reduced }: { page: number; reduced: boolean }) {
     return "rest";
   }, [page]);
 
-  const showChrome = variant === "p3" || variant === "rest";
+  const showTopLeftLogo = variant === "p3";
+  const showChrome = variant === "rest";
 
   return (
     <div className="pointer-events-none fixed inset-0 z-50 select-none" data-testid="logo-hud">
+      {/* Logo only on page 3 */}
+      {showTopLeftLogo && (
+        <div className="absolute left-4 top-4">
+          <img src="/assets/logo.png" alt="Lif3away" className="w-8 h-8" />
+        </div>
+      )}
+      
+      {/* Chrome (logo and login) from page 4 onwards */}
       {showChrome && (
         <>
           <div className="absolute left-4 top-4">
             <img src="/assets/logo.png" alt="Lif3away" className="w-5 h-5" />
           </div>
           <div className="absolute right-6 top-6">
-            <a href="#" className="pointer-events-auto text-white/80 hover:text-white text-sm tracking-wide">
+            <a 
+              href="/login" 
+              className="pointer-events-auto text-white/80 hover:text-white text-sm tracking-wide transition-colors"
+              aria-label="Log in to Lif3away"
+            >
               Log in
             </a>
           </div>
@@ -169,7 +227,15 @@ function LogoHUD({ page, reduced }: { page: number; reduced: boolean }) {
             >
               <motion.div layoutId="brand" className="pointer-events-none flex items-center gap-3 md:gap-4">
                 <img src="/assets/logo.png" alt="Lif3away logo" className="w-[52px] h-[52px] md:w-[64px] md:h-[64px]" />
-                <span className="text-[28px] md:text-[36px] font-light tracking-tight">Lif3away</span>
+                <span 
+                  className="text-[28px] md:text-[36px] font-light tracking-tight" 
+                  style={{ 
+                    fontFamily: "'Helvetica Neue Light', 'Helvetica Neue', -apple-system, BlinkMacSystemFont, 'Inter', sans-serif", 
+                    fontWeight: 300 
+                  }}
+                >
+                  Lif3away
+                </span>
               </motion.div>
             </motion.div>
           </div>
@@ -186,7 +252,8 @@ function CTA({ children, href = "#" }: { children: React.ReactNode; href?: strin
   return (
     <a
       href={href}
-      className="inline-flex items-center justify-center rounded-lg border border-[#23B088] px-5 py-3 text-white hover:bg-white/5 transition-colors"
+      className="inline-flex items-center justify-center rounded-lg border border-[#23B088] px-5 py-3 text-white hover:bg-white/5 transition-colors focus:outline-none focus:ring-2 focus:ring-[#23B088] focus:ring-offset-2 focus:ring-offset-black"
+      aria-label={typeof children === 'string' ? children : 'Call to action'}
     >
       {children}
     </a>
@@ -205,7 +272,7 @@ function TitleParallax({ children, reduced }: { children: React.ReactNode; reduc
   );
 }
 
-// Stable, cross-browser reveal (no clipPath). Keeps layout intact.
+// Stable, cross-browser reveal
 function RevealIn({ children, reduced }: { children: React.ReactNode; reduced: boolean }) {
   return (
     <motion.div
@@ -221,7 +288,7 @@ function RevealIn({ children, reduced }: { children: React.ReactNode; reduced: b
 }
 
 /* ------------------------------------
- * Page 1 — self-drawing SVG + glow
+ * Page 1 - Logo
  * ------------------------------------ */
 function Page1({ reduced }: { reduced: boolean }) {
   const { ref, inView } = useInView({ threshold: 0.75, triggerOnce: false });
@@ -233,37 +300,47 @@ function Page1({ reduced }: { reduced: boolean }) {
   return (
     <div ref={ref} className="absolute inset-0 flex items-center justify-center">
       <div className="relative flex flex-col items-center gap-6">
-        <DrawnLogo key={drawKey} className="w-[260px] h-[260px]" duration={reduced ? 0 : 1.8} />
+        <ErrorBoundary fallback={<img src="/assets/logo.png" alt="Lif3away logo" className="w-[260px] h-[260px]" />}>
+          <DrawnLogo key={drawKey} className="w-[260px] h-[260px]" duration={reduced ? 0 : 1.8} />
+        </ErrorBoundary>
       </div>
     </div>
   );
 }
 
-function DrawnLogo({ className, duration = 2.0 }: { className?: string; duration?: number }) {
+const DrawnLogo = React.memo(function DrawnLogo({ 
+  className, 
+  duration = 2.0 
+}: { 
+  className?: string; 
+  duration?: number 
+}) {
   const [svgMarkup, setSvgMarkup] = useState<string | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
+    let mounted = true;
     (async () => {
       try {
         const r = await fetch("/assets/drawline.svg", { cache: "no-store" });
         const txt = await r.text();
-        if (r.ok && txt.includes("<svg")) setSvgMarkup(txt);
-        else setSvgMarkup(null);
+        if (mounted && r.ok && txt.includes("<svg")) setSvgMarkup(txt);
+        else if (mounted) setSvgMarkup(null);
       } catch {
-        setSvgMarkup(null);
+        if (mounted) setSvgMarkup(null);
       }
     })();
+    return () => { mounted = false; };
   }, []);
 
   useEffect(() => {
     if (!svgMarkup || !containerRef.current) return;
 
     const raf = requestAnimationFrame(() => {
-      const svg = containerRef.current!.querySelector("svg");
+      const svg = containerRef.current?.querySelector("svg");
       if (!svg) return;
 
-      // Normalize stroke so we always get an outline animation
+      // Normalize stroke
       svg.querySelectorAll<SVGGraphicsElement>("*").forEach((n) => {
         n.setAttribute("fill", "none");
         n.setAttribute("stroke", "#23B088");
@@ -276,18 +353,18 @@ function DrawnLogo({ className, duration = 2.0 }: { className?: string; duration
       const targets = svg.querySelectorAll<SVGGeometryElement>("path,polyline,polygon,line,circle,rect");
       targets.forEach((p) => {
         try {
-          const len =
-            typeof (p as any).getTotalLength === "function" ? (p as any).getTotalLength() : 1200;
-          const el = p as unknown as SVGElement;
+          const len = 'getTotalLength' in p && typeof p.getTotalLength === 'function' 
+            ? p.getTotalLength() : 1200;
+          const el = p as SVGElement;
 
           // Starting state
           el.style.strokeDasharray = String(len);
           el.style.strokeDashoffset = String(len);
 
-          // Force reflow so transition reliably triggers (StrictMode double-mount safe)
+          // Force reflow
           void el.getBoundingClientRect();
 
-          // Animate to drawn state
+          // Animate
           el.style.transition = `stroke-dashoffset ${duration}s cubic-bezier(.22,.8,.2,1)`;
           requestAnimationFrame(() => {
             el.style.strokeDashoffset = "0";
@@ -311,14 +388,14 @@ function DrawnLogo({ className, duration = 2.0 }: { className?: string; duration
       )}
     </div>
   );
-}
+});
 
 /* ------------------------------------
- * Page 2 — Updated spacing between logo and text
+ * Page 2 — Logo and brand name
  * ------------------------------------ */
 function Page2({ reduced }: { reduced: boolean }) {
   return (
-    <div className="absolute inset-0 flex items-center justify-center">
+    <div className="absolute inset-0 flex items-center justify-center px-4">
       <motion.div
         layoutId="brand"
         initial={{ opacity: 0, y: reduced ? 0 : 18, scale: 0.98 }}
@@ -326,10 +403,13 @@ function Page2({ reduced }: { reduced: boolean }) {
         transition={{ duration: 0.5, ease: [0.22, 0.8, 0.2, 1] }}
         className="flex items-center leading-none gap-4 md:gap-6"
       >
-        <img src="/assets/logo.png" alt="Lif3away logo" className="w-40 h-40 md:w-72 md:h-72" />
+        <img src="/assets/logo.png" alt="Lif3away logo" className="w-32 h-32 sm:w-40 sm:h-40 md:w-72 md:h-72" />
         <h1
-          className="text-[14vw] md:text-[8vw] font-light tracking-tight"
-          style={{ fontFamily: "system-ui, -apple-system, Helvetica, Arial" }}
+          className="text-[12vw] sm:text-[10vw] md:text-[8vw] font-light tracking-tight"
+          style={{ 
+            fontFamily: "'Helvetica Neue Light', 'Helvetica Neue', -apple-system, BlinkMacSystemFont, 'Inter', sans-serif", 
+            fontWeight: 300 
+          }}
         >
           Lif3away
         </h1>
@@ -348,8 +428,8 @@ function Page3({ reduced }: { reduced: boolean }) {
         <div className="sticky top-24 flex items-start justify-center">
           <div className="w-full max-w-6xl text-center mx-auto">
             <TitleParallax reduced={reduced}>
-              <h2 className="sm:text-2xl text-3xl md:text-5xl font-extrabold leading-tight mb-6">
-               Founding team the most powerful AI ever built to transform how humans live, rent, and move.
+              <h2 className="text-2xl sm:text-3xl md:text-5xl font-extrabold leading-tight mb-6">
+                The founding team building the most powerful AI ever built to transform how humans live, rent, and move.
               </h2>
             </TitleParallax>
             <motion.p
@@ -384,20 +464,20 @@ function Page3({ reduced }: { reduced: boolean }) {
               real-world relocation. That's where Lif3away comes in. We're designing AI systems that do more
               than match listings.
             </motion.p>
-            <CTA>Join the waiting list</CTA>
+            <CTA href="/waitlist">Join the waiting list</CTA>
           </div>
         </div>
       </div>
     </div>
   );
 }
+
 /* ------------------------------------
  * Page 4 - Our Founder's Journey (intro)
  * ------------------------------------ */
 function Page4({ reduced }: { reduced: boolean }) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const { scrollYProgress } = useScroll({ target: containerRef, offset: ["start end", "end start"] });
-
   const headingY = useTransform(scrollYProgress, [0, 1], reduced ? [0, 0] : [40, -40]);
 
   return (
@@ -409,7 +489,7 @@ function Page4({ reduced }: { reduced: boolean }) {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: false, amount: 0.5 }}
           transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
-          className="sm:text-2xl text-3xl md:text-5xl font-semibold text-white"
+          className="text-2xl sm:text-3xl md:text-5xl font-semibold text-white"
         >
           Our Founder's Journey
         </motion.h3>
@@ -419,7 +499,7 @@ function Page4({ reduced }: { reduced: boolean }) {
           whileInView="visible"
           viewport={{ once: false, amount: 0.4 }}
           transition={{ staggerChildren: 0.15 }}
-          className="sm:text-xl text-2xl   space-y-6"
+          className="text-xl sm:text-2xl space-y-6"
         >
           {[
             "Narrated by Isabella Milani, Interim Chief Brand Officer",
@@ -446,7 +526,7 @@ function Page4({ reduced }: { reduced: boolean }) {
 }
 
 /* ------------------------------------
- * Page 5 - Our Founder's Journey (London story)
+ * Page 5 - Our Founder's Journey (London)
  * ------------------------------------ */
 function Page5({ reduced }: { reduced: boolean }) {
   const containerRef = useRef<HTMLDivElement | null>(null);
@@ -462,7 +542,7 @@ function Page5({ reduced }: { reduced: boolean }) {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: false, amount: 0.5 }}
           transition={{ duration: 0.8 }}
-          className="sm:text-2xl text-3xl md:text-5xl font-semibold text-white"
+          className="text-2xl sm:text-3xl md:text-5xl font-semibold text-white"
         >
           Our Founder's Journey
         </motion.h3>
@@ -472,7 +552,7 @@ function Page5({ reduced }: { reduced: boolean }) {
           whileInView="visible"
           viewport={{ once: false, amount: 0.4 }}
           transition={{ staggerChildren: 0.15 }}
-          className="sm:text-xl text-2xl   space-y-6"
+          className="text-xl sm:text-2xl space-y-6"
         >
           {[
             "While he was working in London. A young Italian man walked in with two suitcases and a lost look. Just landed. No place to go. No shared language. He asked for help. No one understood — except Alessandro.",
@@ -513,7 +593,7 @@ function Page6({ reduced }: { reduced: boolean }) {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: false, amount: 0.5 }}
           transition={{ duration: 0.8 }}
-          className="sm:text-2xl text-3xl md:text-5xl font-semibold text-white"
+          className="text-2xl sm:text-3xl md:text-5xl font-semibold text-white"
         >
           Our Founder's Journey
         </motion.h3>
@@ -523,7 +603,7 @@ function Page6({ reduced }: { reduced: boolean }) {
           whileInView="visible"
           viewport={{ once: false, amount: 0.4 }}
           transition={{ staggerChildren: 0.15 }}
-          className="sm:text-xl text-2xl   space-y-6"
+          className="text-xl sm:text-2xl space-y-6"
         >
           {[
             "That's where Lif3away began.",
@@ -549,52 +629,66 @@ function Page6({ reduced }: { reduced: boolean }) {
 }
 
 /* ------------------------------------
- * Video helper — autoplay when visible, fast while on screen
+ * Video helper — with cleanup
  * ------------------------------------ */
 function AutoplayVideo({ src, reduced }: { src: string; reduced: boolean }) {
-  const videoRef = useRef<HTMLVideoElement | null>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
   const { ref, inView } = useInView({ threshold: 0.2, rootMargin: "0px 0px -10% 0px", triggerOnce: false });
 
   useEffect(() => {
     const v = videoRef.current;
     if (!v) return;
+    
     if (inView) {
       v.playbackRate = reduced ? 1 : 2.5;
-      try { if (v.currentTime < 0.05) v.currentTime = 0.05; } catch {}
+      try { 
+        if (v.currentTime < 0.05) v.currentTime = 0.05; 
+      } catch {}
       v.play().catch(() => {});
     } else {
       v.pause();
       v.playbackRate = 1;
     }
+
+    // Cleanup on unmount
+    return () => {
+      if (v) {
+        v.pause();
+        v.playbackRate = 1;
+      }
+    };
   }, [inView, reduced]);
 
   return (
     <div ref={ref} className="absolute inset-0 flex items-center justify-center">
-      <motion.video
-        ref={videoRef}
-        src={src}
-        muted
-        playsInline
-        preload="auto"
-        className="w-full h-full object-contain"
-        initial={{ opacity: reduced ? 1 : 0 }}
-        whileInView={{ opacity: 1 }}
-        viewport={{ once: false, amount: 0.2 }}
-        transition={{ duration: reduced ? 0 : 0.5 }}
-      />
+      <ErrorBoundary fallback={<div className="text-white">Video could not be loaded</div>}>
+        <motion.video
+          ref={videoRef}
+          src={src}
+          muted
+          playsInline
+          preload="metadata"
+          className="w-full h-full object-contain"
+          initial={{ opacity: reduced ? 1 : 0 }}
+          whileInView={{ opacity: 1 }}
+          viewport={{ once: false, amount: 0.2 }}
+          transition={{ duration: reduced ? 0 : 0.5 }}
+          onError={() => console.error('Video failed to load:', src)}
+        />
+      </ErrorBoundary>
     </div>
   );
 }
 
 /* ------------------------------------
- * Page 7 - Video/Image (bed)
+ * Page 7 - Video
  * ------------------------------------ */
 function Page7({ reduced }: { reduced: boolean }) { 
   return <AutoplayVideo src="/assets/page 7.mp4" reduced={reduced} />; 
 }
 
 /* ------------------------------------
- * Page 8 - Core Team (people)
+ * Page 8 - Core Team
  * ------------------------------------ */
 function Page8({ reduced }: { reduced: boolean }) {
   const containerRef = useRef<HTMLDivElement | null>(null);
@@ -626,19 +720,24 @@ function Page8({ reduced }: { reduced: boolean }) {
       delay: 0.5,
     },
     {
+      name: "Dianne Liu",
+      role: "VP of Marketing with 20+ years in SaaS, eCommerce, and tech; drove $40M+ in marketing-sourced revenue at ZAGENO and 196% YoY pipeline growth at TechMD, scaling startups through full-funnel growth and GTM strategy",
+      delay: 0.6,
+    },
+    {
       name: "Qingchen Wang",
       role: "Strategic AI/ML Advisor, AI founder with a Ph.D. and successful exit at Ophelos (acquired by Intrum); ex-Opendoor scientist, now advising Lif3away on AI and strategy",
-      delay: 0.6,
+      delay: 0.7,
     },
     {
       name: "Giles Lindsay",
       role: "Former CTO/CIO in fintech, travel, and SaaS, scaled tech teams to 400+, drove 300%+ delivery improvements, and named World 100 CIO/CTO 2024",
-      delay: 0.7,
+      delay: 0.8,
     },
     {
       name: "Mor Lakritz",
       role: "CFO with 19+ years in SaaS and cybersecurity, led $100M+ financings at SafeBreach, Exabeam, and Talkdesk, driving ARR growth and IPO readiness",
-      delay: 0.8,
+      delay: 0.9,
     },
   ];
 
@@ -646,19 +745,17 @@ function Page8({ reduced }: { reduced: boolean }) {
     <div ref={containerRef} className="relative min-h-screen overflow-hidden">
       <div className="h-full flex items-center px-6 md:px-16 lg:px-24 py-12">
         <div className="w-full max-w-7xl mx-auto">
-          {/* Title */}
-          <h4 className="sm:text-2xl text-3xl lg:text-4xl font-bold tracking-tight mb-12 text-white">
+          <h4 className="text-3xl sm:text-3xl lg:text-4xl font-bold tracking-tight mb-12 text-white">
             Core team
           </h4>
 
-          {/* Intro text */}
           <motion.div style={{ y: contentY }} className="mb-16 space-y-6">
             <motion.p
               initial={{ opacity: 0, y: 30 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: false, amount: 0.3 }}
               transition={{ duration: 0.8 }}
-              className="sm:text-base text-lg md:text-xl text-white/80 max-w-4xl leading-relaxed"
+              className="text-base sm:text-lg md:text-xl text-white/80 max-w-4xl leading-relaxed"
             >
               We are a global team of engineers, designers, real estate innovators, and AI thinkers,
               united by a shared belief: that finding a home should be intelligent, intuitive, and effortless.
@@ -668,7 +765,7 @@ function Page8({ reduced }: { reduced: boolean }) {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: false, amount: 0.3 }}
               transition={{ duration: 0.8, delay: 0.1 }}
-              className="sm:text-base text-lg md:text-xl text-white/80 max-w-4xl leading-relaxed"
+              className="text-base sm:text-lg md:text-xl text-white/80 max-w-4xl leading-relaxed"
             >
               From United States to Europe, our backgrounds span startups, big tech, and real estate
               operations — but what brings us together is a relentless drive to solve one of the biggest
@@ -679,14 +776,13 @@ function Page8({ reduced }: { reduced: boolean }) {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: false, amount: 0.3 }}
               transition={{ duration: 0.8, delay: 0.2 }}
-              className="sm:text-base text-lg md:text-xl text-white/80 max-w-4xl leading-relaxed"
+              className="text-base sm:text-lg md:text-xl text-white/80 max-w-4xl leading-relaxed"
             >
-              At Lif3away, we don’t just build technology, we build the system that will redefine
+              At Lif3away, we don't just build technology, we build the system that will redefine
               how humans live, rent, and move across the world.
             </motion.p>
           </motion.div>
 
-          {/* Members */}
           <motion.div style={{ y: membersY }} className="space-y-10">
             {members.map((member, idx) => (
               <motion.div
@@ -697,10 +793,10 @@ function Page8({ reduced }: { reduced: boolean }) {
                 transition={{ duration: 0.8, delay: member.delay }}
                 className="group"
               >
-                <h4 className="sm:text-lg text-xl md:text-2xl font-semibold mb-2 transition-transform duration-300 group-hover:translate-x-2">
+                <h4 className="text-lg sm:text-xl md:text-2xl font-semibold mb-2 transition-transform duration-300 group-hover:translate-x-2">
                   {member.name}
                 </h4>
-                <p className="sm:text-base text-lg md:text-xl text-white/70 leading-relaxed max-w-3xl md:pl-4 break-words transition-colors duration-300 group-hover:text-white/90">
+                <p className="text-base sm:text-lg md:text-xl text-white/70 leading-relaxed max-w-3xl md:pl-4 break-words transition-colors duration-300 group-hover:text-white/90">
                   {member.role}
                 </p>
               </motion.div>
@@ -708,7 +804,6 @@ function Page8({ reduced }: { reduced: boolean }) {
           </motion.div>
         </div>
 
-        {/* Background parallax */}
         <motion.div
           className="absolute inset-0 -z-10"
           style={{
@@ -721,43 +816,82 @@ function Page8({ reduced }: { reduced: boolean }) {
   );
 }
 
-
 /* ------------------------------------
- * Page 10 - Join Us
+ * Page 9 - Join Us
  * ------------------------------------ */
-function Page10({ reduced }: { reduced: boolean }) {
+function Page9({ reduced }: { reduced: boolean }) {
   return (
     <div className="absolute inset-0 px-6 md:px-12 py-16 flex items-center z-10">
       <div className="w-full max-w-6xl">
-        <RevealIn reduced={reduced}><h3 className="text-3xl md:text-4xl font-semibold mb-6">Join Us</h3></RevealIn>
         <RevealIn reduced={reduced}>
-          <p className="text-white/90 max-w-4xl mb-8">We are a team of designers, engineers, AI builders, and global citizens working to make relocation frictionless — not just in one city, but everywhere. Our mission is bold. Our ambition is global. And our work is just beginning.</p>
-          <p className="text-white/90 max-w-4xl mb-8">Lif3away is hiring. If you're passionate about AI, design, infrastructure, or global housing equity — reach out.</p>
-          <CTA>View open positions</CTA>
+          <h3 className="text-3xl md:text-4xl font-semibold mb-6">Join Us</h3>
+        </RevealIn>
+        <RevealIn reduced={reduced}>
+          <p className="text-white/90 max-w-4xl mb-8">
+            We are a team of designers, engineers, AI builders, and global citizens working to make 
+            relocation frictionless — not just in one city, but everywhere. Our mission is bold. 
+            Our ambition is global. And our work is just beginning.
+          </p>
+          <p className="text-white/90 max-w-4xl mb-8">
+            Lif3away is hiring. If you're passionate about AI, design, infrastructure, or global 
+            housing equity — reach out.
+          </p>
+          <CTA href="/careers">View open positions</CTA>
         </RevealIn>
       </div>
     </div>
   );
 }
 
-
 /* ------------------------------------
- * Page 12 - Partner With Us
+ * Page 10 - Partner With Us
  * ------------------------------------ */
-function Page12({ reduced }: { reduced: boolean }) {
+function Page10({ reduced }: { reduced: boolean }) {
   return (
     <div className="absolute inset-0 flex items-center justify-center z-10">
       <div className="text-center px-6">
         <RevealIn reduced={reduced}>
           <h3 className="text-3xl md:text-4xl font-semibold mb-4">Partner With Us</h3>
-          <p className="text-white/90 max-w-2xl">We're open to unexpected conversations — the kind that move the needle. partnership@lif3away.com</p>
+          <p className="text-white/90 max-w-2xl">
+            Lif3away is building a new standard in rentals, if you are interested in joining contact partnership@lif3away.com
+          </p>
         </RevealIn>
       </div>
       <div className="absolute left-6 bottom-6 flex items-center gap-5">
-        <a href="https://x.com/Lif3away" aria-label="Twitter" target="_blank" className="opacity-90 hover:opacity-100"><FaXTwitter size={20} /></a>
-        <a href="https://www.linkedin.com/company/lif3away-com" target="_blank" aria-label="LinkedIn" className="opacity-90 hover:opacity-100"><FaLinkedinIn size={20} /></a>
-        <a href="mailto:partnership@lif3away.com" aria-label="Email" className="opacity-90 hover:opacity-100"><HiOutlineMail size={22} /></a>
-        <a href="https://www.facebook.com/Lif3away/" target="_blank" aria-label="Facebook" className="opacity-90 hover:opacity-100"><FaFacebook size={20} /></a>
+        <a 
+          href="https://x.com/Lif3away" 
+          aria-label="Follow Lif3away on Twitter" 
+          target="_blank" 
+          rel="noopener noreferrer"
+          className="opacity-90 hover:opacity-100 transition-opacity focus:outline-none focus:ring-2 focus:ring-[#23B088] focus:ring-offset-2 focus:ring-offset-black rounded"
+        >
+          <FaXTwitter size={20} />
+        </a>
+        <a 
+          href="https://www.linkedin.com/company/lif3away-com" 
+          target="_blank" 
+          aria-label="Connect with Lif3away on LinkedIn" 
+          rel="noopener noreferrer"
+          className="opacity-90 hover:opacity-100 transition-opacity focus:outline-none focus:ring-2 focus:ring-[#23B088] focus:ring-offset-2 focus:ring-offset-black rounded"
+        >
+          <FaLinkedinIn size={20} />
+        </a>
+        <a 
+          href="mailto:partnership@lif3away.com" 
+          aria-label="Email Lif3away at partnership@lif3away.com" 
+          className="opacity-90 hover:opacity-100 transition-opacity focus:outline-none focus:ring-2 focus:ring-[#23B088] focus:ring-offset-2 focus:ring-offset-black rounded"
+        >
+          <HiOutlineMail size={22} />
+        </a>
+        <a 
+          href="https://www.facebook.com/Lif3away/" 
+          target="_blank" 
+          aria-label="Like Lif3away on Facebook" 
+          rel="noopener noreferrer"
+          className="opacity-90 hover:opacity-100 transition-opacity focus:outline-none focus:ring-2 focus:ring-[#23B088] focus:ring-offset-2 focus:ring-offset-black rounded"
+        >
+          <FaFacebook size={20} />
+        </a>
       </div>
     </div>
   );
@@ -768,13 +902,13 @@ function Page12({ reduced }: { reduced: boolean }) {
  * ------------------------------------ */
 function DevTests() {
   useEffect(() => {
-    console.assert(TOTAL_PAGES === 12, `Expected TOTAL_PAGES to be 12, got ${TOTAL_PAGES}`);
+    console.assert(TOTAL_PAGES === 10, `Expected TOTAL_PAGES to be 10, got ${TOTAL_PAGES}`);
     const secs = document.querySelectorAll("section");
-    console.assert(secs.length === 12, `Expected 12 sections, found ${secs.length}`);
+    console.assert(secs.length === TOTAL_PAGES, `Expected ${TOTAL_PAGES} sections, found ${secs.length}`);
     fetch("/assets/drawline.svg", { method: "HEAD" })
       .then(r => console.log("[Dev] drawline.svg HEAD:", r.status, r.ok))
       .catch(() => console.warn("[Dev] drawline.svg HEAD failed"));
-    const hud = document.querySelector('[data-testid="logo-hud"]') || document.body;
+    const hud = document.querySelector('[data-testid="logo-hud"]');
     console.assert(!!hud, "HUD not found");
   }, []);
   return null;
