@@ -90,13 +90,18 @@ function Landing() {
 
   return (
     <div
-      className="relative min-h-screen w-full overflow-x-hidden bg-black text-white"
-      style={{ scrollBehavior: "smooth", scrollbarWidth: "none", msOverflowStyle: "none" }}
+      className="relative min-h-screen w-full overflow-x-hidden bg-black text-white scroll-smooth [&::-webkit-scrollbar]:hidden"
+      style={{ 
+        scrollBehavior: "smooth", 
+        scrollbarWidth: "none", 
+        msOverflowStyle: "none",
+        ...(typeof window !== 'undefined' && { WebkitOverflowScrolling: "touch" }) 
+      } as React.CSSProperties}
     >
       <AgenticGrid reduced={reduced} />
       <LogoHUD page={currentPage} reduced={reduced} />
 
-      {/*Pagewise Sections  */}
+      {/* Sections - Fixed numbering */}
       <Section pageNum={1} onInView={onInView}><Page1 reduced={reduced} /></Section>
       <PageSpacer />
       <Section pageNum={2} onInView={onInView}><Page2 reduced={reduced} /></Section>
@@ -132,7 +137,10 @@ const Section = React.memo(function Section({
   onInView: (p: number, v: boolean) => void;
   children: React.ReactNode;
 }) {
-  const { ref, inView } = useInView({ threshold: 0.6 });
+  const { ref, inView } = useInView({ 
+    threshold: 0.6,
+    rootMargin: "0px 0px -10% 0px" // Added root margin for smoother transitions
+  });
   useEffect(() => onInView(pageNum, inView), [inView, onInView, pageNum]);
   return (
     <section ref={ref} className="relative w-full min-h-screen bg-black overflow-hidden snap-start">
@@ -174,8 +182,9 @@ const AgenticGrid = React.memo(function AgenticGrid({ reduced }: { reduced: bool
  * HUD choreography
  * ------------------------------------ */
 function LogoHUD({ page, reduced }: { page: number; reduced: boolean }) {
-  const { scrollYProgress } = useScroll();
-  const scale = useTransform(scrollYProgress, [0, 1], reduced ? [1, 1] : [1, 0.98]);
+  const [showText, setShowText] = useState(false);
+  const [typewriterText, setTypewriterText] = useState("");
+  const fullText = "Lif3away";
 
   const variant = useMemo(() => {
     if (page === 1) return "p1";
@@ -184,63 +193,145 @@ function LogoHUD({ page, reduced }: { page: number; reduced: boolean }) {
     return "rest";
   }, [page]);
 
-  const showTopLeftLogo = variant === "p3";
-  const showChrome = variant === "rest";
+  // Control text appearance timing for page 2
+  useEffect(() => {
+    if (variant === "p2") {
+      setShowText(false);
+      setTypewriterText("");
+      
+     
+      const textTimer = setTimeout(() => {
+        setShowText(true);
+      }, 600);
+
+      return () => {
+        clearTimeout(textTimer);
+      };
+    } else {
+      setShowText(false);
+      setTypewriterText("");
+    }
+  }, [variant]);
+
+  // Typewriter effect
+  useEffect(() => {
+    if (showText && variant === "p2") {
+      setTypewriterText(""); // Reset first
+      const chars = "Lif3away".split(""); // Use string directly
+      let currentIndex = 0;
+      
+      const typeInterval = setInterval(() => {
+        if (currentIndex < chars.length) {
+          setTypewriterText(prev => {
+            // Build the string from scratch each time to avoid concatenation issues
+            return chars.slice(0, currentIndex + 1).join("");
+          });
+          currentIndex++;
+        } else {
+          clearInterval(typeInterval);
+        }
+      }, 60); // Typing speed
+
+      return () => clearInterval(typeInterval);
+    }
+  }, [showText, variant]);
+
+  if (variant === "p1" || variant === "rest") return null;
 
   return (
     <div className="pointer-events-none fixed inset-0 z-50 select-none" data-testid="logo-hud">
-      {/* Logo only on page 3 */}
-      {showTopLeftLogo && (
-        <div className="absolute left-4 top-4">
-          <img src="/assets/logo.png" alt="Lif3away" className="w-8 h-8" />
-        </div>
-      )}
-      
-      {/* Chrome (logo and login) from page 4 onwards */}
-      {showChrome && (
-        <>
-          <div className="absolute left-4 top-4">
-            <img src="/assets/logo.png" alt="Lif3away" className="w-5 h-5" />
-          </div>
-          <div className="absolute right-6 top-6">
-            <a 
-              href="/login" 
-              className="pointer-events-auto text-white/80 hover:text-white text-sm tracking-wide transition-colors"
-              aria-label="Log in to Lif3away"
+      {/* Logo for page 2 - centered */}
+      {variant === "p2" && (
+        <motion.div
+          className="absolute flex items-center justify-center"
+          initial={{ 
+            left: "50%", 
+            top: "50%", 
+            x: "-50%", 
+            y: "-50%",
+            opacity: 0
+          }}
+          animate={{ 
+            left: "50%",
+            top: "50%", 
+            x: "-50%", 
+            y: "-50%",
+            opacity: 1
+          }}
+          transition={{ 
+            duration: 0.5, 
+            ease: "easeOut",
+            opacity: { duration: 0.3 } 
+          }}
+        >
+          <img 
+            src="/assets/logo.png" 
+            alt="Lif3away logo" 
+            className="w-[140px] h-[140px] sm:w-[180px] sm:h-[180px] md:w-[220px] md:h-[220px] lg:w-[280px] lg:h-[280px]"
+          />
+          {/*  spacing between logo and text */}
+          <div className="w-2 sm:w-3 md:w-4" />
+          
+          <div className="relative">
+            <motion.span 
+              className="text-[48px] sm:text-[64px] md:text-[80px] lg:text-[100px] xl:text-[120px] font-light tracking-tight inline-block whitespace-nowrap" 
+              style={{ 
+                fontFamily: "'Helvetica Neue', 'HelveticaNeue-Light', 'Helvetica Neue Light', 'Helvetica', 'Arial', sans-serif", 
+                fontWeight: 300,
+                letterSpacing: '-0.02em',
+                paddingRight: '0.1em' // Add padding to prevent cutoff
+              }}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: showText ? 1 : 0 }}
+              transition={{ duration: 0.3 }} // Reduced from 0.5s
             >
-              Log in
-            </a>
+              {typewriterText}
+            </motion.span>
           </div>
-        </>
+        </motion.div>
       )}
 
-      <AnimatePresence initial={false}>
-        {variant === "p3" && (
-          <div className="absolute left-1/2 top-4 -translate-x-1/2">
-            <motion.div
-              key="hud-p3"
-              style={{ scale }}
-              initial={{ opacity: 0, y: -8 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0 }}
-              transition={{ type: "spring", stiffness: reduced ? 80 : 160, damping: reduced ? 20 : 18 }}
-            >
-              <motion.div layoutId="brand" className="pointer-events-none flex items-center gap-3 md:gap-4">
-                <img src="/assets/logo.png" alt="Lif3away logo" className="w-[52px] h-[52px] md:w-[64px] md:h-[64px]" />
-                <span 
-                  className="text-[28px] md:text-[36px] font-light tracking-tight" 
-                  style={{ 
-                    fontFamily: "'Helvetica Neue Light', 'Helvetica Neue', -apple-system, BlinkMacSystemFont, 'Inter', sans-serif", 
-                    fontWeight: 300 
-                  }}
-                >
-                  Lif3away
-                </span>
-              </motion.div>
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
+      {/* Logo for page 3 - top left corner */}
+      {variant === "p3" && (
+        <motion.div
+          className="absolute"
+          initial={{ 
+            left: "50%", 
+            top: "50%", 
+            x: "-50%", 
+            y: "-50%",
+            opacity: 1
+          }}
+          animate={{ 
+            left: "32px",
+            top: "32px",
+            x: 0,
+            y: 0,
+            opacity: 1
+          }}
+          transition={{ 
+            duration: 1, 
+            ease: [0.43, 0.13, 0.23, 0.96]
+          }}
+        >
+          <motion.img 
+            src="/assets/logo.png" 
+            alt="Lif3away logo"
+            animate={{
+              width: "48px",
+              height: "48px"
+            }}
+            initial={{
+              width: "220px",
+              height: "220px"
+            }}
+            transition={{ 
+              duration: 1, 
+              ease: [0.43, 0.13, 0.23, 0.96]
+            }}
+          />
+        </motion.div>
+      )}
     </div>
   );
 }
@@ -279,7 +370,7 @@ function RevealIn({ children, reduced }: { children: React.ReactNode; reduced: b
       initial={{ y: reduced ? 0 : 24, opacity: 0, filter: reduced ? "none" : "blur(6px)" }}
       whileInView={{ y: 0, opacity: 1, filter: "blur(0px)" }}
       viewport={{ once: false, amount: 0.3 }}
-      transition={{ duration: reduced ? 0.25 : 0.6, ease: [0.22, 0.8, 0.2, 1] }}
+      transition={{ duration: reduced ? 0.15 : 0.35, ease: [0.22, 0.8, 0.2, 1] }} // Reduced from 0.25/0.6
       className="will-change-transform"
     >
       {children}
@@ -288,7 +379,7 @@ function RevealIn({ children, reduced }: { children: React.ReactNode; reduced: b
 }
 
 /* ------------------------------------
- * Page 1 - Logo
+ * Page 1 — self-drawing SVG + glow
  * ------------------------------------ */
 function Page1({ reduced }: { reduced: boolean }) {
   const { ref, inView } = useInView({ threshold: 0.75, triggerOnce: false });
@@ -301,7 +392,7 @@ function Page1({ reduced }: { reduced: boolean }) {
     <div ref={ref} className="absolute inset-0 flex items-center justify-center">
       <div className="relative flex flex-col items-center gap-6">
         <ErrorBoundary fallback={<img src="/assets/logo.png" alt="Lif3away logo" className="w-[260px] h-[260px]" />}>
-          <DrawnLogo key={drawKey} className="w-[260px] h-[260px]" duration={reduced ? 0 : 1.8} />
+          <DrawnLogo key={drawKey} className="w-[260px] h-[260px]" duration={reduced ? 0 : 1.2} />
         </ErrorBoundary>
       </div>
     </div>
@@ -394,28 +485,8 @@ const DrawnLogo = React.memo(function DrawnLogo({
  * Page 2 — Logo and brand name
  * ------------------------------------ */
 function Page2({ reduced }: { reduced: boolean }) {
-  return (
-    <div className="absolute inset-0 flex items-center justify-center px-4">
-      <motion.div
-        layoutId="brand"
-        initial={{ opacity: 0, y: reduced ? 0 : 18, scale: 0.98 }}
-        animate={{ opacity: 1, y: 0, scale: 1 }}
-        transition={{ duration: 0.5, ease: [0.22, 0.8, 0.2, 1] }}
-        className="flex items-center leading-none gap-4 md:gap-6"
-      >
-        <img src="/assets/logo.png" alt="Lif3away logo" className="w-32 h-32 sm:w-40 sm:h-40 md:w-72 md:h-72" />
-        <h1
-          className="text-[12vw] sm:text-[10vw] md:text-[8vw] font-light tracking-tight"
-          style={{ 
-            fontFamily: "'Helvetica Neue Light', 'Helvetica Neue', -apple-system, BlinkMacSystemFont, 'Inter', sans-serif", 
-            fontWeight: 300 
-          }}
-        >
-          Lif3away
-        </h1>
-      </motion.div>
-    </div>
-  );
+  // Page 2 is empty - the logo and text are rendered by LogoHUD
+  return <div className="absolute inset-0" />;
 }
 
 /* ------------------------------------
@@ -424,8 +495,9 @@ function Page2({ reduced }: { reduced: boolean }) {
 function Page3({ reduced }: { reduced: boolean }) {
   return (
     <div className="absolute inset-0 px-6 z-10">
-      <div className="relative h-full">
-        <div className="sticky top-24 flex items-start justify-center">
+      <div className="relative h-full flex items-center">
+        <div className="w-full">
+          {/* Centered content */}
           <div className="w-full max-w-6xl text-center mx-auto">
             <TitleParallax reduced={reduced}>
               <h2 className="text-2xl sm:text-3xl md:text-5xl font-extrabold leading-tight mb-6">
@@ -436,7 +508,7 @@ function Page3({ reduced }: { reduced: boolean }) {
               initial={{ opacity: 0, y: 14 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: false, amount: 0.2 }}
-              transition={{ duration: 0.45 }}
+              transition={{ duration: 0.3 }} 
               className="text-base md:text-lg text-white/90 mb-4 max-w-4xl mx-auto"
             >
               We're building the world's most advanced AI agent for medium-to-long-term rentals, empowering
@@ -446,7 +518,7 @@ function Page3({ reduced }: { reduced: boolean }) {
               initial={{ opacity: 0, y: 14 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: false, amount: 0.2 }}
-              transition={{ delay: 0.06, duration: 0.45 }}
+              transition={{ delay: 0.03, duration: 0.3 }} 
               className="text-base md:text-lg text-white/90 mb-4 max-w-4xl mx-auto"
             >
               Why now? While platforms have made travel and short-term stays easier, the mid-to-long-term
@@ -457,14 +529,21 @@ function Page3({ reduced }: { reduced: boolean }) {
               initial={{ opacity: 0, y: 14 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: false, amount: 0.2 }}
-              transition={{ delay: 0.12, duration: 0.45 }}
+              transition={{ delay: 0.06, duration: 0.3 }} 
               className="text-base md:text-lg text-white/90 mb-8 max-w-4xl mx-auto"
             >
               At the same time, AI is reaching a new frontier. But no one is applying its true potential to
               real-world relocation. That's where Lif3away comes in. We're designing AI systems that do more
               than match listings.
             </motion.p>
-            <CTA href="/waitlist">Join the waiting list</CTA>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.09, duration: 0.3 }} 
+              className="flex justify-center"
+            >
+              <CTA href="/waitlist">Join the waiting list</CTA>
+            </motion.div>
           </div>
         </div>
       </div>
@@ -482,13 +561,13 @@ function Page4({ reduced }: { reduced: boolean }) {
 
   return (
     <div ref={containerRef} className="relative min-h-screen flex items-center px-6 md:px-12 py-24 z-10">
-      <div className="w-full max-w-6xl space-y-8">
+      <div className="w-full max-w-6xl mx-auto text-center space-y-8">
         <motion.h3
           style={{ y: headingY }}
           initial={{ opacity: 0, y: 50 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: false, amount: 0.5 }}
-          transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
+                        transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }} // Reduced from 0.8s
           className="text-2xl sm:text-3xl md:text-5xl font-semibold text-white"
         >
           Our Founder's Journey
@@ -498,7 +577,7 @@ function Page4({ reduced }: { reduced: boolean }) {
           initial="hidden"
           whileInView="visible"
           viewport={{ once: false, amount: 0.4 }}
-          transition={{ staggerChildren: 0.15 }}
+          transition={{ staggerChildren: 0.08 }} // Reduced from 0.15s
           className="text-xl sm:text-2xl space-y-6"
         >
           {[
@@ -513,8 +592,8 @@ function Page4({ reduced }: { reduced: boolean }) {
                 hidden: { opacity: 0, y: 40, filter: "blur(6px)" },
                 visible: { opacity: 1, y: 0, filter: "blur(0px)" }
               }}
-              transition={{ duration: 0.8, ease: [0.22, 0.8, 0.2, 1] }}
-              className={`text-white/90 max-w-4xl ${i === 0 ? "italic mb-6" : "leading-relaxed"}`}
+              transition={{ duration: 0.5, ease: [0.22, 0.8, 0.2, 1] }} // Reduced from 0.8s
+              className={`text-white/90 max-w-4xl mx-auto ${i === 0 ? "italic mb-6" : "leading-relaxed"}`}
             >
               {text}
             </motion.p>
@@ -535,7 +614,7 @@ function Page5({ reduced }: { reduced: boolean }) {
 
   return (
     <div ref={containerRef} className="relative min-h-screen flex items-center px-6 md:px-12 py-24 z-10">
-      <div className="w-full max-w-6xl space-y-8">
+      <div className="w-full max-w-6xl mx-auto text-center space-y-8">
         <motion.h3
           style={{ y: headingY }}
           initial={{ opacity: 0, y: 50 }}
@@ -565,7 +644,7 @@ function Page5({ reduced }: { reduced: boolean }) {
                 visible: { opacity: 1, y: 0, filter: "blur(0px)" }
               }}
               transition={{ duration: 0.8, ease: [0.22, 0.8, 0.2, 1] }}
-              className="text-white/90 max-w-4xl leading-relaxed"
+              className="text-white/90 max-w-4xl mx-auto leading-relaxed"
             >
               {text}
             </motion.p>
@@ -586,7 +665,7 @@ function Page6({ reduced }: { reduced: boolean }) {
 
   return (
     <div ref={containerRef} className="relative min-h-screen flex items-center px-6 md:px-12 py-24 z-10">
-      <div className="w-full max-w-6xl space-y-8">
+      <div className="w-full max-w-6xl mx-auto text-center space-y-8">
         <motion.h3
           style={{ y: headingY }}
           initial={{ opacity: 0, y: 50 }}
@@ -617,7 +696,7 @@ function Page6({ reduced }: { reduced: boolean }) {
                 visible: { opacity: 1, y: 0, filter: "blur(0px)" }
               }}
               transition={{ duration: 0.8, ease: [0.22, 0.8, 0.2, 1] }}
-              className="text-white/90 max-w-4xl leading-relaxed"
+              className="text-white/90 max-w-4xl mx-auto leading-relaxed"
             >
               {text}
             </motion.p>
@@ -629,7 +708,7 @@ function Page6({ reduced }: { reduced: boolean }) {
 }
 
 /* ------------------------------------
- * Video helper — with cleanup
+ * Video helper
  * ------------------------------------ */
 function AutoplayVideo({ src, reduced }: { src: string; reduced: boolean }) {
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -744,7 +823,7 @@ function Page8({ reduced }: { reduced: boolean }) {
   return (
     <div ref={containerRef} className="relative min-h-screen overflow-hidden">
       <div className="h-full flex items-center px-6 md:px-16 lg:px-24 py-12">
-        <div className="w-full max-w-7xl mx-auto">
+        <div className="w-full max-w-7xl mx-auto text-center">
           <h4 className="text-3xl sm:text-3xl lg:text-4xl font-bold tracking-tight mb-12 text-white">
             Core team
           </h4>
@@ -755,7 +834,7 @@ function Page8({ reduced }: { reduced: boolean }) {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: false, amount: 0.3 }}
               transition={{ duration: 0.8 }}
-              className="text-base sm:text-lg md:text-xl text-white/80 max-w-4xl leading-relaxed"
+              className="text-base sm:text-lg md:text-xl text-white/80 max-w-4xl mx-auto leading-relaxed"
             >
               We are a global team of engineers, designers, real estate innovators, and AI thinkers,
               united by a shared belief: that finding a home should be intelligent, intuitive, and effortless.
@@ -765,7 +844,7 @@ function Page8({ reduced }: { reduced: boolean }) {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: false, amount: 0.3 }}
               transition={{ duration: 0.8, delay: 0.1 }}
-              className="text-base sm:text-lg md:text-xl text-white/80 max-w-4xl leading-relaxed"
+              className="text-base sm:text-lg md:text-xl text-white/80 max-w-4xl mx-auto leading-relaxed"
             >
               From United States to Europe, our backgrounds span startups, big tech, and real estate
               operations — but what brings us together is a relentless drive to solve one of the biggest
@@ -776,7 +855,7 @@ function Page8({ reduced }: { reduced: boolean }) {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: false, amount: 0.3 }}
               transition={{ duration: 0.8, delay: 0.2 }}
-              className="text-base sm:text-lg md:text-xl text-white/80 max-w-4xl leading-relaxed"
+              className="text-base sm:text-lg md:text-xl text-white/80 max-w-4xl mx-auto leading-relaxed"
             >
               At Lif3away, we don't just build technology, we build the system that will redefine
               how humans live, rent, and move across the world.
@@ -787,16 +866,16 @@ function Page8({ reduced }: { reduced: boolean }) {
             {members.map((member, idx) => (
               <motion.div
                 key={idx}
-                initial={{ opacity: 0, x: -40 }}
-                whileInView={{ opacity: 1, x: 0 }}
+                initial={{ opacity: 0, y: 40 }}
+                whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: false, amount: 0.5 }}
                 transition={{ duration: 0.8, delay: member.delay }}
                 className="group"
               >
-                <h4 className="text-lg sm:text-xl md:text-2xl font-semibold mb-2 transition-transform duration-300 group-hover:translate-x-2">
+                <h4 className="text-lg sm:text-xl md:text-2xl font-semibold mb-2">
                   {member.name}
                 </h4>
-                <p className="text-base sm:text-lg md:text-xl text-white/70 leading-relaxed max-w-3xl md:pl-4 break-words transition-colors duration-300 group-hover:text-white/90">
+                <p className="text-base sm:text-lg md:text-xl text-white/70 leading-relaxed max-w-3xl mx-auto break-words">
                   {member.role}
                 </p>
               </motion.div>
@@ -822,21 +901,23 @@ function Page8({ reduced }: { reduced: boolean }) {
 function Page9({ reduced }: { reduced: boolean }) {
   return (
     <div className="absolute inset-0 px-6 md:px-12 py-16 flex items-center z-10">
-      <div className="w-full max-w-6xl">
+      <div className="w-full max-w-6xl mx-auto text-center">
         <RevealIn reduced={reduced}>
           <h3 className="text-3xl md:text-4xl font-semibold mb-6">Join Us</h3>
         </RevealIn>
         <RevealIn reduced={reduced}>
-          <p className="text-white/90 max-w-4xl mb-8">
+          <p className="text-white/90 max-w-4xl mx-auto mb-8">
             We are a team of designers, engineers, AI builders, and global citizens working to make 
-            relocation frictionless — not just in one city, but everywhere. Our mission is bold. 
+            relocation frictionless not just in one city, but everywhere. Our mission is bold. 
             Our ambition is global. And our work is just beginning.
           </p>
-          <p className="text-white/90 max-w-4xl mb-8">
+          <p className="text-white/90 max-w-4xl mx-auto mb-8">
             Lif3away is hiring. If you're passionate about AI, design, infrastructure, or global 
-            housing equity — reach out.
+            housing equity reach out.
           </p>
-          <CTA href="/careers">View open positions</CTA>
+          <div className="flex justify-center">
+            <CTA href="/careers">View open positions</CTA>
+          </div>
         </RevealIn>
       </div>
     </div>
