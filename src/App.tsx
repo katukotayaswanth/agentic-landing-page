@@ -347,7 +347,7 @@ function LogoHUD({ page, reduced }: { page: number; reduced: boolean }) {
       {/* Logo for page 3 - top left corner */}
       {variant === "p3" && (
         <motion.div
-          className="absolute"
+          className="absolute flex items-center"
           initial={{
             left: "50%",
             top: "50%",
@@ -383,6 +383,24 @@ function LogoHUD({ page, reduced }: { page: number; reduced: boolean }) {
               ease: [0.43, 0.13, 0.23, 0.96],
             }}
           />
+
+          {/*  spacing between logo and text */}
+          <div className="w-2 sm:w-1 md:w-2" />
+
+          <motion.span
+            className="text-[20px] sm:text-[21px] md:text-[23px] lg:text-[25px] text-gray-400 tracking-tight whitespace-nowrap"
+            style={{
+              fontFamily:
+                "'Helvetica Neue', 'HelveticaNeue-Light', 'Helvetica Neue Light', 'Helvetica', 'Arial', sans-serif",
+              letterSpacing: "-0.02em",
+              paddingRight: "0.1em", // avoid cutoff
+            }}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.5, delay: 0.5 }}
+          >
+            Lif3away
+          </motion.span>
         </motion.div>
       )}
     </div>
@@ -598,59 +616,105 @@ function Page2({ reduced }: { reduced: boolean }) {
 /* ------------------------------------
  * Page 3 — Hero text + CTA
  * ------------------------------------ */
+/* -----------------------------
+ * Page 3 - The Founding Team
+ * ----------------------------- */
 function Page3({ reduced }: { reduced: boolean }) {
   return (
-    <div className="absolute inset-0 px-6 z-10">
+    <div className="absolute inset-0 px-6 sm:px-10 md:px-16 lg:px-20 z-10">
       <div className="relative h-full flex items-center">
         <div className="w-full">
           {/* Centered content */}
-          <div className="w-full max-w-6xl text-center mx-auto">
+          <div className="w-full max-w-6xl text-left mx-auto space-y-8">
+            {/* Heading with parallax */}
             <TitleParallax reduced={reduced}>
-              <h2 className="text-2xl sm:text-3xl md:text-5xl font-extrabold leading-tight mb-6">
-                The founding team building the most powerful AI ever built to
-                transform how humans live, rent, and move.
-              </h2>
+              <motion.h2
+                initial={{ opacity: 0, y: 40, filter: "blur(6px)" }}
+                whileInView={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+                viewport={{ once: false, amount: 0.5 }}
+                transition={{ duration: 0.5, ease: [0.22, 0.8, 0.2, 1] }}
+                className="text-2xl sm:text-3xl md:text-5xl font-semibold text-white leading-tight"
+              >
+                The most powerful AI ever built to transform how humans live,
+                rent, and move
+              </motion.h2>
             </TitleParallax>
-            <motion.p
-              initial={{ opacity: 0, y: 14 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: false, amount: 0.2 }}
-              transition={{ duration: 0.3 }}
-              className="text-base md:text-lg text-white/90 mb-4 max-w-4xl mx-auto"
-            >
-              We're building the world's most advanced AI agent for
-              medium-to-long-term rentals, empowering people to move anywhere,
-              live better, and rent with trust, speed, and clarity.
-            </motion.p>
-            <motion.p
-              initial={{ opacity: 0, y: 14 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: false, amount: 0.2 }}
-              transition={{ delay: 0.03, duration: 0.3 }}
-              className="text-base md:text-lg text-white/90 mb-4 max-w-4xl mx-auto"
-            >
-              Why now? While platforms have made travel and short-term stays
-              easier, the mid-to-long-term rental market remains broken: scams,
-              delays, and outdated listings are still the norm. Human movement
-              has evolved — but housing hasn't kept up.
-            </motion.p>
-            <motion.p
-              initial={{ opacity: 0, y: 14 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: false, amount: 0.2 }}
-              transition={{ delay: 0.06, duration: 0.3 }}
-              className="text-base md:text-lg text-white/90 mb-8 max-w-4xl mx-auto"
-            >
-              At the same time, AI is reaching a new frontier. But no one is
-              applying its true potential to real-world relocation. That's where
-              Lif3away comes in. We're designing AI systems that do more than
-              match listings.
-            </motion.p>
+
+            {/* Body paragraphs */}
             <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.09, duration: 0.3 }}
-              className="flex justify-center"
+              initial="hidden"
+              whileInView="visible"
+              viewport={{ once: false, amount: 0.4 }}
+              transition={{ staggerChildren: 0.08 }} // Reduced from 0.15s
+              className="text-xl sm:text-2xl space-y-6"
+            >
+              {[
+                "We're building the world's most advanced AI agent for medium-to-long-term rentals, empowering people to move anywhere, live better, and rent with trust, speed, and clarity.",
+                // keep "Why now?" separate with tight margin
+                <div key="whynow" className="space-y-1">
+                  <motion.p
+                    variants={{
+                      hidden: { opacity: 0, y: 40, filter: "blur(6px)" },
+                      visible: { opacity: 1, y: 0, filter: "blur(0px)" },
+                    }}
+                    transition={{ duration: 0.5, ease: [0.22, 0.8, 0.2, 1] }}
+                    className="font-semibold leading-tight"
+                  >
+                    Why now?
+                  </motion.p>
+                  <motion.p
+                    variants={{
+                      hidden: { opacity: 0, y: 40, filter: "blur(6px)" },
+                      visible: { opacity: 1, y: 0, filter: "blur(0px)" },
+                    }}
+                    transition={{
+                      duration: 0.5,
+                      ease: [0.22, 0.8, 0.2, 1],
+                      delay: 0.1,
+                    }}
+                    className="leading-relaxed"
+                  >
+                    While platforms have made travel and short-term stays
+                    easier, the mid-to-long-term rental market remains broken:
+                    scams, delays, and outdated listings are still the norm.
+                    Human movement has evolved — but housing hasn't kept up.
+                  </motion.p>
+                </div>,
+                "At the same time, AI is reaching a new frontier. But no one is applying its true potential to real-world relocation. That's where Lif3away comes in. We're designing AI systems that do more than match listings.",
+              ].map((text, i) =>
+                typeof text === "string" ? (
+                  <motion.p
+                    key={i}
+                    variants={{
+                      hidden: { opacity: 0, y: 40, filter: "blur(6px)" },
+                      visible: { opacity: 1, y: 0, filter: "blur(0px)" },
+                    }}
+                    transition={{
+                      duration: 0.5,
+                      ease: [0.22, 0.8, 0.2, 1],
+                      delay: i * 0.1,
+                    }}
+                    className="leading-relaxed"
+                  >
+                    {text}
+                  </motion.p>
+                ) : (
+                  text
+                )
+              )}
+            </motion.div>
+
+            {/* CTA button */}
+            <motion.div
+              initial={{ opacity: 0, y: 20, filter: "blur(6px)" }}
+              whileInView={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+              viewport={{ once: false, amount: 0.3 }}
+              transition={{
+                duration: 0.5,
+                delay: 0.4,
+                ease: [0.22, 0.8, 0.2, 1],
+              }}
+              className="flex"
             >
               <CTA href="/waitlist">Join the waiting list</CTA>
             </motion.div>
@@ -679,19 +743,20 @@ function Page4({ reduced }: { reduced: boolean }) {
   return (
     <div
       ref={containerRef}
-      className="relative min-h-screen flex items-center px-6 md:px-12 py-24 z-10"
+      className="relative min-h-screen flex items-center px-6 sm:px-10 md:px-16 lg:px-20 py-24 z-10"
     >
-      <div className="w-full max-w-6xl mx-auto text-center space-y-8">
-        <motion.h3
-          style={{ y: headingY }}
-          initial={{ opacity: 0, y: 50 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: false, amount: 0.5 }}
-          transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }} // Reduced from 0.8s
-          className="text-2xl sm:text-3xl md:text-5xl font-semibold text-white"
-        >
-          Our Founder's Journey
-        </motion.h3>
+      <div className="w-full max-w-6xl mx-auto text-left space-y-8">
+        <TitleParallax reduced={reduced}>
+          <motion.h2
+            initial={{ opacity: 0, y: 40, filter: "blur(6px)" }}
+            whileInView={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+            viewport={{ once: false, amount: 0.5 }}
+            transition={{ duration: 0.5, ease: [0.22, 0.8, 0.2, 1] }}
+            className="text-2xl sm:text-3xl md:text-5xl font-semibold text-white leading-tight"
+          >
+            Our Founder's Journey
+          </motion.h2>
+        </TitleParallax>
 
         <motion.div
           initial="hidden"
@@ -713,7 +778,7 @@ function Page4({ reduced }: { reduced: boolean }) {
                 visible: { opacity: 1, y: 0, filter: "blur(0px)" },
               }}
               transition={{ duration: 0.5, ease: [0.22, 0.8, 0.2, 1] }} // Reduced from 0.8s
-              className={`text-white/90 max-w-4xl mx-auto ${
+              className={`text-white/90 ${
                 i === 0 ? "italic mb-6" : "leading-relaxed"
               }`}
             >
@@ -744,20 +809,9 @@ function Page5({ reduced }: { reduced: boolean }) {
   return (
     <div
       ref={containerRef}
-      className="relative min-h-screen flex items-center px-6 md:px-12 py-24 z-10"
+      className="relative min-h-screen flex items-center px-6 sm:px-10 md:px-16 lg:px-20 py-24 z-10"
     >
-      <div className="w-full max-w-6xl mx-auto text-center space-y-8">
-        <motion.h3
-          style={{ y: headingY }}
-          initial={{ opacity: 0, y: 50 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: false, amount: 0.5 }}
-          transition={{ duration: 0.8 }}
-          className="text-2xl sm:text-3xl md:text-5xl font-semibold text-white"
-        >
-          Our Founder's Journey
-        </motion.h3>
-
+      <div className="w-full max-w-6xl mx-auto text-left space-y-8">
         <motion.div
           initial="hidden"
           whileInView="visible"
@@ -776,7 +830,7 @@ function Page5({ reduced }: { reduced: boolean }) {
                 visible: { opacity: 1, y: 0, filter: "blur(0px)" },
               }}
               transition={{ duration: 0.8, ease: [0.22, 0.8, 0.2, 1] }}
-              className="text-white/90 max-w-4xl mx-auto leading-relaxed"
+              className="text-white/90 leading-relaxed"
             >
               {text}
             </motion.p>
@@ -805,20 +859,9 @@ function Page6({ reduced }: { reduced: boolean }) {
   return (
     <div
       ref={containerRef}
-      className="relative min-h-screen flex items-center px-6 md:px-12 py-24 z-10"
+      className="relative min-h-screen flex items-center px-6 sm:px-10 md:px-16 lg:px-20 py-24 z-10"
     >
-      <div className="w-full max-w-6xl mx-auto text-center space-y-8">
-        <motion.h3
-          style={{ y: headingY }}
-          initial={{ opacity: 0, y: 50 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: false, amount: 0.5 }}
-          transition={{ duration: 0.8 }}
-          className="text-2xl sm:text-3xl md:text-5xl font-semibold text-white"
-        >
-          Our Founder's Journey
-        </motion.h3>
-
+      <div className="w-full max-w-6xl mx-auto text-left space-y-8">
         <motion.div
           initial="hidden"
           whileInView="visible"
@@ -838,7 +881,7 @@ function Page6({ reduced }: { reduced: boolean }) {
                 visible: { opacity: 1, y: 0, filter: "blur(0px)" },
               }}
               transition={{ duration: 0.8, ease: [0.22, 0.8, 0.2, 1] }}
-              className="text-white/90 max-w-4xl mx-auto leading-relaxed"
+              className="text-white/90 leading-relaxed"
             >
               {text}
             </motion.p>
