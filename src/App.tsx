@@ -1091,12 +1091,15 @@ function Page8({ reduced }: { reduced: boolean }) {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: false, amount: 0.5 }}
                 transition={{ duration: 0.8, delay: member.delay }}
-                className="group"
+                className="group flex flex-col sm:flex-row sm:items-start sm:space-x-6"
               >
-                <h4 className="text-xl sm:text-2xl font-semibold mb-2">
+                {/* Name column with fixed width on desktop */}
+                <h4 className="text-xl sm:text-2xl font-semibold mb-2 sm:mb-0 sm:w-60 flex-shrink-0">
                   {member.name}
                 </h4>
-                <p className="text-xl sm:text-2xl text-white/70 leading-relaxed">
+
+                {/* Role column takes remaining space */}
+                <p className="text-xl sm:text-2xl text-white/70 leading-relaxed sm:flex-1">
                   {member.role}
                 </p>
               </motion.div>
