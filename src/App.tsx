@@ -1127,70 +1127,68 @@ function Page9({ reduced }: { reduced: boolean }) {
   return (
     <div className="absolute inset-0 px-6 sm:px-10 md:px-16 lg:px-20 z-10">
       <div className="relative h-full flex items-center">
-        <div className="w-full">
-          <div className="w-full max-w-6xl text-left mx-auto space-y-8">
-            {/* Heading with parallax */}
-            <TitleParallax reduced={reduced}>
-              <motion.h2
-                initial={{ opacity: 0, y: 40, filter: "blur(6px)" }}
-                whileInView={{ opacity: 1, y: 0, filter: "blur(0px)" }}
-                viewport={{ once: false, amount: 0.5 }}
-                transition={{ duration: 0.5, ease: [0.22, 0.8, 0.2, 1] }}
-                className="text-2xl sm:text-3xl md:text-5xl font-semibold text-white leading-tight"
-              >
-                Join Us
-              </motion.h2>
-            </TitleParallax>
-
-            {/* Body paragraphs */}
-            <motion.div
-              initial="hidden"
-              whileInView="visible"
-              viewport={{ once: false, amount: 0.4 }}
-              transition={{ staggerChildren: 0.08 }} // Reduced from 0.15s
-              className="text-xl sm:text-2xl space-y-6"
-            >
-              {[
-                "We are a team of designers, engineers, AI builders, and global citizens working to make relocation frictionless not just in one city, but everywhere. Our mission is bold. Our ambition is global. And our work is just beginning.",
-                "Lif3away is hiring. If you're passionate about AI, design, infrastructure, or global housing equity reach out.",
-              ].map((text, i) =>
-                typeof text === "string" ? (
-                  <motion.p
-                    key={i}
-                    variants={{
-                      hidden: { opacity: 0, y: 40, filter: "blur(6px)" },
-                      visible: { opacity: 1, y: 0, filter: "blur(0px)" },
-                    }}
-                    transition={{
-                      duration: 0.5,
-                      ease: [0.22, 0.8, 0.2, 1],
-                      delay: i * 0.1,
-                    }}
-                    className="leading-relaxed"
-                  >
-                    {text}
-                  </motion.p>
-                ) : (
-                  text
-                )
-              )}
-            </motion.div>
-
-            {/* CTA button */}
-            <motion.div
-              initial={{ opacity: 0, y: 20, filter: "blur(6px)" }}
+        <div className="w-full max-w-6xl text-left mx-auto space-y-8">
+          {/* Heading with parallax */}
+          <TitleParallax reduced={reduced}>
+            <motion.h2
+              initial={{ opacity: 0, y: 40, filter: "blur(6px)" }}
               whileInView={{ opacity: 1, y: 0, filter: "blur(0px)" }}
-              viewport={{ once: false, amount: 0.3 }}
-              transition={{
-                duration: 0.5,
-                delay: 0.4,
-                ease: [0.22, 0.8, 0.2, 1],
-              }}
-              className="flex"
+              viewport={{ once: false, amount: 0.5 }}
+              transition={{ duration: 0.5, ease: [0.22, 0.8, 0.2, 1] }}
+              className="text-2xl sm:text-3xl md:text-5xl font-semibold text-white leading-tight"
             >
-              <CTA href="/careers">View open positions</CTA>
-            </motion.div>
-          </div>
+              Join Us
+            </motion.h2>
+          </TitleParallax>
+
+          {/* Body paragraphs */}
+          <motion.div
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: false, amount: 0.4 }}
+            transition={{ staggerChildren: 0.08 }} // Reduced from 0.15s
+            className="text-xl sm:text-2xl space-y-6"
+          >
+            {[
+              "We are a team of designers, engineers, AI builders, and global citizens working to make relocation frictionless not just in one city, but everywhere. Our mission is bold. Our ambition is global. And our work is just beginning.",
+              "Lif3away is hiring. If you're passionate about AI, design, infrastructure, or global housing equity reach out.",
+            ].map((text, i) =>
+              typeof text === "string" ? (
+                <motion.p
+                  key={i}
+                  variants={{
+                    hidden: { opacity: 0, y: 40, filter: "blur(6px)" },
+                    visible: { opacity: 1, y: 0, filter: "blur(0px)" },
+                  }}
+                  transition={{
+                    duration: 0.5,
+                    ease: [0.22, 0.8, 0.2, 1],
+                    delay: i * 0.1,
+                  }}
+                  className="leading-relaxed"
+                >
+                  {text}
+                </motion.p>
+              ) : (
+                text
+              )
+            )}
+          </motion.div>
+
+          {/* CTA button */}
+          <motion.div
+            initial={{ opacity: 0, y: 20, filter: "blur(6px)" }}
+            whileInView={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+            viewport={{ once: false, amount: 0.3 }}
+            transition={{
+              duration: 0.5,
+              delay: 0.4,
+              ease: [0.22, 0.8, 0.2, 1],
+            }}
+            className="flex"
+          >
+            <CTA href="/careers">View open positions</CTA>
+          </motion.div>
         </div>
       </div>
     </div>
@@ -1203,52 +1201,54 @@ function Page9({ reduced }: { reduced: boolean }) {
 function Page10({ reduced }: { reduced: boolean }) {
   return (
     <div className="absolute inset-0 px-6 sm:px-10 md:px-16 lg:px-20 z-10">
-      <div className="text-left px-6">
-        {/* Heading with parallax */}
-        <TitleParallax reduced={reduced}>
-          <motion.h2
-            initial={{ opacity: 0, y: 40, filter: "blur(6px)" }}
-            whileInView={{ opacity: 1, y: 0, filter: "blur(0px)" }}
-            viewport={{ once: false, amount: 0.5 }}
-            transition={{ duration: 0.5, ease: [0.22, 0.8, 0.2, 1] }}
-            className="text-2xl sm:text-3xl md:text-5xl font-semibold text-white leading-tight"
-          >
-            Partner With Us
-          </motion.h2>
-        </TitleParallax>
+      <div className="relative h-full flex items-center">
+        <div className="w-full max-w-6xl text-left mx-auto space-y-8">
+          {/* Heading with parallax */}
+          <TitleParallax reduced={reduced}>
+            <motion.h2
+              initial={{ opacity: 0, y: 40, filter: "blur(6px)" }}
+              whileInView={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+              viewport={{ once: false, amount: 0.5 }}
+              transition={{ duration: 0.5, ease: [0.22, 0.8, 0.2, 1] }}
+              className="text-2xl sm:text-3xl md:text-5xl font-semibold text-white leading-tight"
+            >
+              Partner With Us
+            </motion.h2>
+          </TitleParallax>
 
-        {/* Body paragraphs */}
-        <motion.div
-          initial="hidden"
-          whileInView="visible"
-          viewport={{ once: false, amount: 0.4 }}
-          transition={{ staggerChildren: 0.08 }} // Reduced from 0.15s
-          className="text-xl sm:text-2xl space-y-6"
-        >
-          {[
-            "Lif3away is building a new standard in rentals, if you are interested in joining contact partnership@lif3away.com",
-          ].map((text, i) =>
-            typeof text === "string" ? (
-              <motion.p
-                key={i}
-                variants={{
-                  hidden: { opacity: 0, y: 40, filter: "blur(6px)" },
-                  visible: { opacity: 1, y: 0, filter: "blur(0px)" },
-                }}
-                transition={{
-                  duration: 0.5,
-                  ease: [0.22, 0.8, 0.2, 1],
-                  delay: i * 0.1,
-                }}
-                className="leading-relaxed"
-              >
-                {text}
-              </motion.p>
-            ) : (
-              text
-            )
-          )}
-        </motion.div>
+          {/* Body paragraphs */}
+          <motion.div
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: false, amount: 0.4 }}
+            transition={{ staggerChildren: 0.08 }} // Reduced from 0.15s
+            className="text-xl sm:text-2xl space-y-6"
+          >
+            {[
+              "Lif3away is building a new standard in rentals, if you are interested in joining contact partnership@lif3away.com",
+            ].map((text, i) =>
+              typeof text === "string" ? (
+                <motion.p
+                  key={i}
+                  variants={{
+                    hidden: { opacity: 0, y: 40, filter: "blur(6px)" },
+                    visible: { opacity: 1, y: 0, filter: "blur(0px)" },
+                  }}
+                  transition={{
+                    duration: 0.5,
+                    ease: [0.22, 0.8, 0.2, 1],
+                    delay: i * 0.1,
+                  }}
+                  className="leading-relaxed"
+                >
+                  {text}
+                </motion.p>
+              ) : (
+                text
+              )
+            )}
+          </motion.div>
+        </div>
       </div>
       <div className="absolute left-6 bottom-6 flex items-center gap-5">
         <a
