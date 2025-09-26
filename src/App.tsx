@@ -621,7 +621,7 @@ function Page2({ reduced }: { reduced: boolean }) {
  * ----------------------------- */
 function Page3({ reduced }: { reduced: boolean }) {
   return (
-    <div className="absolute inset-0 px-6 sm:px-10 md:px-16 lg:px-20 z-10">
+    <div className="relative px-6 sm:px-10 md:px-16 lg:px-20 z-10">
       <div className="relative h-full flex items-center">
         <div className="w-full">
           {/* Centered content */}
@@ -1031,11 +1031,20 @@ function Page8({ reduced }: { reduced: boolean }) {
 
   return (
     <div ref={containerRef} className="relative min-h-screen overflow-hidden">
-      <div className="h-full flex items-center px-6 md:px-16 lg:px-24 py-12">
-        <div className="w-full max-w-7xl mx-auto text-center">
-          <h4 className="text-3xl sm:text-3xl lg:text-4xl font-bold tracking-tight mb-12 text-white">
-            Core team
-          </h4>
+      <div className="h-full flex items-center px-6 sm:px-10 md:px-16 lg:px-20 py-12">
+        <div className="w-full max-w-7xl mx-auto text-left">
+          {/* Heading with parallax */}
+          <TitleParallax reduced={reduced}>
+            <motion.h2
+              initial={{ opacity: 0, y: 40, filter: "blur(6px)" }}
+              whileInView={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+              viewport={{ once: false, amount: 0.5 }}
+              transition={{ duration: 0.5, ease: [0.22, 0.8, 0.2, 1] }}
+              className="text-2xl sm:text-3xl md:text-5xl font-semibold text-white leading-tight mb-8"
+            >
+              Core team
+            </motion.h2>
+          </TitleParallax>
 
           <motion.div style={{ y: contentY }} className="mb-16 space-y-6">
             <motion.p
@@ -1043,7 +1052,7 @@ function Page8({ reduced }: { reduced: boolean }) {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: false, amount: 0.3 }}
               transition={{ duration: 0.8 }}
-              className="text-base sm:text-lg md:text-xl text-white/80 max-w-4xl mx-auto leading-relaxed"
+              className="text-xl sm:text-2xl text-white/80 leading-relaxed"
             >
               We are a global team of engineers, designers, real estate
               innovators, and AI thinkers, united by a shared belief: that
@@ -1054,7 +1063,7 @@ function Page8({ reduced }: { reduced: boolean }) {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: false, amount: 0.3 }}
               transition={{ duration: 0.8, delay: 0.1 }}
-              className="text-base sm:text-lg md:text-xl text-white/80 max-w-4xl mx-auto leading-relaxed"
+              className="text-xl sm:text-2xl text-white/80 leading-relaxed"
             >
               From United States to Europe, our backgrounds span startups, big
               tech, and real estate operations — but what brings us together is
@@ -1066,7 +1075,7 @@ function Page8({ reduced }: { reduced: boolean }) {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: false, amount: 0.3 }}
               transition={{ duration: 0.8, delay: 0.2 }}
-              className="text-base sm:text-lg md:text-xl text-white/80 max-w-4xl mx-auto leading-relaxed"
+              className="text-xl sm:text-2xl text-white/80 leading-relaxed"
             >
               At Lif3away, we don't just build technology, we build the system
               that will redefine how humans live, rent, and move across the
@@ -1084,10 +1093,10 @@ function Page8({ reduced }: { reduced: boolean }) {
                 transition={{ duration: 0.8, delay: member.delay }}
                 className="group"
               >
-                <h4 className="text-lg sm:text-xl md:text-2xl font-semibold mb-2">
+                <h4 className="text-xl sm:text-2xl font-semibold mb-2">
                   {member.name}
                 </h4>
-                <p className="text-base sm:text-lg md:text-xl text-white/70 leading-relaxed max-w-3xl mx-auto break-words">
+                <p className="text-xl sm:text-2xl text-white/70 leading-relaxed">
                   {member.role}
                 </p>
               </motion.div>
@@ -1113,26 +1122,73 @@ function Page8({ reduced }: { reduced: boolean }) {
  * ------------------------------------ */
 function Page9({ reduced }: { reduced: boolean }) {
   return (
-    <div className="absolute inset-0 px-6 md:px-12 py-16 flex items-center z-10">
-      <div className="w-full max-w-6xl mx-auto text-center">
-        <RevealIn reduced={reduced}>
-          <h3 className="text-3xl md:text-4xl font-semibold mb-6">Join Us</h3>
-        </RevealIn>
-        <RevealIn reduced={reduced}>
-          <p className="text-white/90 max-w-4xl mx-auto mb-8">
-            We are a team of designers, engineers, AI builders, and global
-            citizens working to make relocation frictionless not just in one
-            city, but everywhere. Our mission is bold. Our ambition is global.
-            And our work is just beginning.
-          </p>
-          <p className="text-white/90 max-w-4xl mx-auto mb-8">
-            Lif3away is hiring. If you're passionate about AI, design,
-            infrastructure, or global housing equity reach out.
-          </p>
-          <div className="flex justify-center">
-            <CTA href="/careers">View open positions</CTA>
+    <div className="absolute inset-0 px-6 sm:px-10 md:px-16 lg:px-20 z-10">
+      <div className="relative h-full flex items-center">
+        <div className="w-full">
+          <div className="w-full max-w-6xl text-left mx-auto space-y-8">
+            {/* Heading with parallax */}
+            <TitleParallax reduced={reduced}>
+              <motion.h2
+                initial={{ opacity: 0, y: 40, filter: "blur(6px)" }}
+                whileInView={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+                viewport={{ once: false, amount: 0.5 }}
+                transition={{ duration: 0.5, ease: [0.22, 0.8, 0.2, 1] }}
+                className="text-2xl sm:text-3xl md:text-5xl font-semibold text-white leading-tight"
+              >
+                Join Us
+              </motion.h2>
+            </TitleParallax>
+
+            {/* Body paragraphs */}
+            <motion.div
+              initial="hidden"
+              whileInView="visible"
+              viewport={{ once: false, amount: 0.4 }}
+              transition={{ staggerChildren: 0.08 }} // Reduced from 0.15s
+              className="text-xl sm:text-2xl space-y-6"
+            >
+              {[
+                "We are a team of designers, engineers, AI builders, and global citizens working to make relocation frictionless not just in one city, but everywhere. Our mission is bold. Our ambition is global. And our work is just beginning.",
+                "Lif3away is hiring. If you're passionate about AI, design, infrastructure, or global housing equity reach out.",
+              ].map((text, i) =>
+                typeof text === "string" ? (
+                  <motion.p
+                    key={i}
+                    variants={{
+                      hidden: { opacity: 0, y: 40, filter: "blur(6px)" },
+                      visible: { opacity: 1, y: 0, filter: "blur(0px)" },
+                    }}
+                    transition={{
+                      duration: 0.5,
+                      ease: [0.22, 0.8, 0.2, 1],
+                      delay: i * 0.1,
+                    }}
+                    className="leading-relaxed"
+                  >
+                    {text}
+                  </motion.p>
+                ) : (
+                  text
+                )
+              )}
+            </motion.div>
+
+            {/* CTA button */}
+            <motion.div
+              initial={{ opacity: 0, y: 20, filter: "blur(6px)" }}
+              whileInView={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+              viewport={{ once: false, amount: 0.3 }}
+              transition={{
+                duration: 0.5,
+                delay: 0.4,
+                ease: [0.22, 0.8, 0.2, 1],
+              }}
+              className="flex"
+            >
+              <CTA href="/careers">View open positions</CTA>
+            </motion.div>
           </div>
-        </RevealIn>
+        </div>
       </div>
     </div>
   );
@@ -1143,17 +1199,53 @@ function Page9({ reduced }: { reduced: boolean }) {
  * ------------------------------------ */
 function Page10({ reduced }: { reduced: boolean }) {
   return (
-    <div className="absolute inset-0 flex items-center justify-center z-10">
-      <div className="text-center px-6">
-        <RevealIn reduced={reduced}>
-          <h3 className="text-3xl md:text-4xl font-semibold mb-4">
+    <div className="absolute inset-0 px-6 sm:px-10 md:px-16 lg:px-20 z-10">
+      <div className="text-left px-6">
+        {/* Heading with parallax */}
+        <TitleParallax reduced={reduced}>
+          <motion.h2
+            initial={{ opacity: 0, y: 40, filter: "blur(6px)" }}
+            whileInView={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+            viewport={{ once: false, amount: 0.5 }}
+            transition={{ duration: 0.5, ease: [0.22, 0.8, 0.2, 1] }}
+            className="text-2xl sm:text-3xl md:text-5xl font-semibold text-white leading-tight"
+          >
             Partner With Us
-          </h3>
-          <p className="text-white/90 max-w-2xl">
-            Lif3away is building a new standard in rentals, if you are
-            interested in joining contact partnership@lif3away.com
-          </p>
-        </RevealIn>
+          </motion.h2>
+        </TitleParallax>
+
+        {/* Body paragraphs */}
+        <motion.div
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: false, amount: 0.4 }}
+          transition={{ staggerChildren: 0.08 }} // Reduced from 0.15s
+          className="text-xl sm:text-2xl space-y-6"
+        >
+          {[
+            "Lif3away is building a new standard in rentals, if you are interested in joining contact partnership@lif3away.com",
+          ].map((text, i) =>
+            typeof text === "string" ? (
+              <motion.p
+                key={i}
+                variants={{
+                  hidden: { opacity: 0, y: 40, filter: "blur(6px)" },
+                  visible: { opacity: 1, y: 0, filter: "blur(0px)" },
+                }}
+                transition={{
+                  duration: 0.5,
+                  ease: [0.22, 0.8, 0.2, 1],
+                  delay: i * 0.1,
+                }}
+                className="leading-relaxed"
+              >
+                {text}
+              </motion.p>
+            ) : (
+              text
+            )
+          )}
+        </motion.div>
       </div>
       <div className="absolute left-6 bottom-6 flex items-center gap-5">
         <a
